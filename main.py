@@ -1,4 +1,5 @@
 import pygame
+from pygame.locals import *
 import random
 
 WIDTH = 800
@@ -20,11 +21,16 @@ tiles = pygame.sprite.Group()
 class Tile(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('img/tile.png').convert_alpha()
+        self.image = pygame.image.load('img/tile.jpg').convert_alpha()
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.topleft = (self.x, self.y)
+
+    def click(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos):
+            self.x = -100
+            self.y = -100
 
     def update(self):
         self.rect.topleft = (self.x, self.y)
@@ -62,6 +68,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == MOUSEBUTTONDOWN:
+            for tile in tilesArr:
+                tile.click(event.pos)
 
     screen.fill("black")
     tiles.draw(screen)
