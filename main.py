@@ -3,7 +3,7 @@ from pygame.locals import *
 from random import randrange
 
 ROWS = 16
-COLS = 16
+COLS = 17
 WIDTH = ROWS * 50
 HEIGHT = COLS * 50
 FPS = 30
@@ -104,12 +104,13 @@ class Tile(pygame.sprite.Sprite):
 
     def left_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
-            if self.num == 0:
-                self.open_around_empty()
-                open_empty_tiles()
-            if self.num == 9:
-                game_over()
-            self.status = "open"
+            if self.status != "flaged":
+                if self.num == 0:
+                    self.open_around_empty()
+                    open_empty_tiles()
+                if self.num == 9:
+                    game_over()
+                self.status = "open"
 
     def right_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
