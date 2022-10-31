@@ -3,7 +3,7 @@ from pygame.locals import *
 from random import randrange
 
 ROWS = 16
-COLS = 17
+COLS = 16
 WIDTH = ROWS * 50
 HEIGHT = COLS * 50
 FPS = 30
@@ -104,13 +104,15 @@ class Tile(pygame.sprite.Sprite):
 
     def left_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
-            if self.status != "flaged":
+            if self.status != "flaged" and self.status != "open":
                 if self.num == 0:
                     self.open_around_empty()
                     open_empty_tiles()
                 if self.num == 9:
                     game_over()
                 self.status = "open"
+            elif self.status == "open":
+                self.quick_open()
 
     def right_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
@@ -120,9 +122,33 @@ class Tile(pygame.sprite.Sprite):
             elif self.status == "flaged":
                 self.status = "closed"
 
-    def open_around_empty(self):
+    def get_self_tile(self):
         filtredbyy = [t for t in tilesArr if t.y == self.y]
-        t = [t for t in filtredbyy if t.x == self.x][0]
+        return [t for t in filtredbyy if t.x == self.x][0]
+
+    def get_tiles_around(self):
+        arr = []
+        t = self.get_self_tile()
+        if t.get_tile("left"):
+            arr.append(t.get_tile("left"))
+        if t.get_tile("right"):
+            arr.append(t.get_tile("right"))
+        if t.get_tile("up"):
+            arr.append(t.get_tile("up"))
+        if t.get_tile("down"):
+            arr.append(t.get_tile("down"))
+        if t.get_tile("up-left"):
+            arr.append(t.get_tile("up-left"))
+        if t.get_tile("up-right"):
+            arr.append(t.get_tile("up-right"))
+        if t.get_tile("down-right"):
+            arr.append(t.get_tile("down-right"))
+        if t.get_tile("down-left"):
+            arr.append(t.get_tile("down-left"))
+        return arr
+
+    def open_around_empty(self):
+        t = self.get_self_tile()
         if t.get_tile("left"):
             t.get_tile("left").status = "open"
         if t.get_tile("right"):
@@ -139,6 +165,29 @@ class Tile(pygame.sprite.Sprite):
             t.get_tile("down-right").status = "open"
         if t.get_tile("down-left"):
             t.get_tile("down-left").status = "open"
+
+    def quick_open(self):
+        bombs = self.num
+        flaged_tiles = 0
+        flaged_bombs = 0
+        arr = self.get_tiles_around()
+
+        for t in arr:
+            if t.status == "flaged":
+                flaged_tiles += 1
+            if t.status == "flaged" and t.num == 9:
+                flaged_bombs += 1
+        print(flaged_tiles)
+        print(flaged_bombs)
+        if bombs == flaged_tiles:
+            if flaged_bombs < flaged_tiles:
+                game_over()
+            elif flaged_bombs == flaged_tiles:
+                for t in arr:
+                    if t.status == "closed" and t.num != 9:
+                        t.status = "open"
+                        if t.num == 0:
+                            open_empty_tiles()
 
     def set_image_by_status(self):
         if self.status == "flaged":
