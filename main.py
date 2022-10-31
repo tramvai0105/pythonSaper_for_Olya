@@ -2,22 +2,23 @@ import pygame
 from pygame.locals import *
 from random import randrange
 
+# РАЗМЕРЫ СЕТКИ ДОЛЖНЫ БЫТЬ В ПРОПОРЦИИ 1:1
 ROWS = 16
 COLS = 16
+
 WIDTH = ROWS * 50
 HEIGHT = COLS * 50
 FPS = 30
 BOMBS = 50
 GAMESTAGE = "game"
-
-
+# ИНИЦИАЛИЗИРУЕМ ИГРУ, СОЗДАЕМ НАДПИСИ
 pygame.init()
 FONTSM = pygame.font.Font('fonts/font.otf', 60)
 FONT = pygame.font.Font('fonts/font.otf', 200)
 FONTW = pygame.font.Font('fonts/font.otf', 400)
 
 restart_text = FONTSM.render('click left button to restart...', False, 'blue')
-restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT*7 // 10))
+restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT * 7 // 10))
 
 game_over_text = FONT.render('GAME OVER', False, 'red')
 game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
@@ -33,6 +34,7 @@ clock = pygame.time.Clock()
 tiles = pygame.sprite.Group()
 
 
+# КЛАСС КЛЕТОЧКИ
 class Tile(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, num=0, status="closed"):
         pygame.sprite.Sprite.__init__(self)
@@ -44,6 +46,7 @@ class Tile(pygame.sprite.Sprite):
         self.status = status
         self.rect.topleft = (self.x, self.y)
 
+    # МЕТОД ДЛЯ ПОЛУЧЕНИЯ ОБЪЕКТА КЛЕТОЧКИ ПО НАПРАВЛЕНИЮ
     def get_tile(self, direct):
         if direct == "left":
             if self.x != 0:
@@ -102,6 +105,7 @@ class Tile(pygame.sprite.Sprite):
             else:
                 return False
 
+    # ОБРАБОТКА ЛЕВОГО КЛИКА
     def left_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
             if self.status != "flaged" and self.status != "open":
@@ -114,6 +118,7 @@ class Tile(pygame.sprite.Sprite):
             elif self.status == "open":
                 self.quick_open()
 
+    # ОБРАБОТКА ПРАВОГО КЛИКА
     def right_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
             if self.status != "open" and self.status != "flaged":
@@ -122,10 +127,12 @@ class Tile(pygame.sprite.Sprite):
             elif self.status == "flaged":
                 self.status = "closed"
 
+    # ПОЛУЧАЕМ СОБСТВЕННЫЙ ОБЪЕКТ
     def get_self_tile(self):
         filtredbyy = [t for t in tilesArr if t.y == self.y]
         return [t for t in filtredbyy if t.x == self.x][0]
 
+    # ПОЛУЧАЕМ МАССИВ КЛЕТОК ВОКРУГ
     def get_tiles_around(self):
         arr = []
         t = self.get_self_tile()
@@ -147,6 +154,7 @@ class Tile(pygame.sprite.Sprite):
             arr.append(t.get_tile("down-left"))
         return arr
 
+    # ОТКРЫВАЕМ КЛЕТКИ ВОКРУГ
     def open_around_empty(self):
         t = self.get_self_tile()
         if t.get_tile("left"):
@@ -166,6 +174,7 @@ class Tile(pygame.sprite.Sprite):
         if t.get_tile("down-left"):
             t.get_tile("down-left").status = "open"
 
+    # БЫСТРОЕ ОТКРЫТИЕ
     def quick_open(self):
         bombs = self.num
         flaged_tiles = 0
@@ -177,8 +186,6 @@ class Tile(pygame.sprite.Sprite):
                 flaged_tiles += 1
             if t.status == "flaged" and t.num == 9:
                 flaged_bombs += 1
-        print(flaged_tiles)
-        print(flaged_bombs)
         if bombs == flaged_tiles:
             if flaged_bombs < flaged_tiles:
                 game_over()
@@ -189,6 +196,7 @@ class Tile(pygame.sprite.Sprite):
                         if t.num == 0:
                             open_empty_tiles()
 
+    # ТЕКСТУРА СОГЛАСНО НОМЕРУ И СТАТУСУ
     def set_image_by_status(self):
         if self.status == "flaged":
             self.image = pygame.image.load('img/flag.png').convert_alpha()
@@ -216,15 +224,18 @@ class Tile(pygame.sprite.Sprite):
             if self.num == 9:
                 self.image = pygame.image.load('img/tileopen9.png')
 
+    # РАБОЧИЙ МЕТОД PYGAME ДЛЯ ОБНОВЛЕНИЯ СОСТОЯНИЯ КЛЕТОЧКИ
     def update(self):
         self.set_image_by_status()
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
 
 
+# СОЗДАЕМ МАССИВ КЛЕТОК
 tilesArr = [Tile() for i in range(ROWS * COLS)]
 
 
+# ФУНКЦИЯ ГЕНЕРАТОР КООРДИНАТ ДЛЯ СЕТКИ
 def get_coords():
     for y in range(COLS):
         for x in range(ROWS):
@@ -238,10 +249,12 @@ for tile in tilesArr:
     tile.x = c[0] * 50
     tile.y = c[1] * 50
 
+# ДОБАВЛЯЕМ ВСЕ КЛЕТКИ В ГРУППУ ДЛЯ КОЛЛЕКТИВНОГО ОБНОВЛЕНИЯ
 for tile in tilesArr:
     tiles.add(tile)
 
 
+# СТАВИМ БОМБЫ
 def set_bombs():
     counter = BOMBS
     while counter:
@@ -254,6 +267,7 @@ def set_bombs():
             counter = counter - 1
 
 
+# СТАВИМ ЧИСЛА
 def place_nums():
     for t in tilesArr:
         if t.num != 9:
@@ -283,6 +297,7 @@ def place_nums():
                     t.num = t.num + 1
 
 
+# СМЕНА СТАТУСА ИГРЫ ЧЕРЕЗ ГЛОБАЛЬНЫЙ ДОСТУП К ПЕРЕМЕННОЙ
 def change_stage(stage):
     global GAMESTAGE
     if stage == "game":
@@ -293,6 +308,7 @@ def change_stage(stage):
         GAMESTAGE = "WIN"
 
 
+# ФУНКЦИЯ КОНЦА ИГРЫ
 def game_over():
     for t in tilesArr:
         if t.num == 9:
@@ -300,6 +316,7 @@ def game_over():
     change_stage("GAMEOVER")
 
 
+# ПЕРЕЗАПУСК
 def restart():
     for t in tilesArr:
         t.num = 0
@@ -309,6 +326,7 @@ def restart():
     change_stage("game")
 
 
+# ПОБЕДА
 def game_win():
     flags = 0
     for t in tilesArr:
@@ -318,6 +336,7 @@ def game_win():
         change_stage("WIN")
 
 
+# СЛУЖЕБНАЯ ФУНКЦИЯ, ПРОВЕРЯЕТ ЕСТЬ ЛИ РЯДОМ С КЛЕТКОЙ ПУСТЫЕ
 def check_open_tiles(t):
     if t.get_tile("left"):
         if t.get_tile("left").status == "open" and t.get_tile("left").num == 0:
@@ -347,6 +366,7 @@ def check_open_tiles(t):
         return False
 
 
+# ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ КЛАСТЕРА ПУСТЫХ КЛЕТОК
 def open_empty_tiles():
     changes = 1
     while changes:
@@ -362,15 +382,17 @@ def open_empty_tiles():
             t.open_around_empty()
 
 
+# СТАВИМ БОМБЫ И НОМЕРА ПЕРЕД ПЕРВОЙ ИГРОЙ
 set_bombs()
 place_nums()
 
+# ОСНОВНОЙ ЦИКЛ ИГРЫ
 running = True
-
 while running:
     clock.tick(FPS)
     tiles.update()
 
+    # ЛОГИКА ДЛЯ ИГРОВОЙ СТАДИИ
     if GAMESTAGE == "game":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -385,6 +407,7 @@ while running:
         screen.fill("white")
         tiles.draw(screen)
 
+    # ЛОГИКА ДЛЯ КОНЦА ИГРЫ
     if GAMESTAGE == "GAMEOVER":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -398,6 +421,7 @@ while running:
         screen.blit(game_over_text, game_over_rect)
         screen.blit(restart_text, restart_rect)
 
+    # ЛОГИКА ДЛЯ ПОБЕДЫ
     if GAMESTAGE == "WIN":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
