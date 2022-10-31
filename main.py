@@ -7,14 +7,23 @@ COLS = 16
 WIDTH = ROWS * 50
 HEIGHT = COLS * 50
 FPS = 30
-BOMBS = 40
+BOMBS = 50
 GAMESTAGE = "game"
 
 
 pygame.init()
+FONTSM = pygame.font.Font('fonts/font.otf', 60)
 FONT = pygame.font.Font('fonts/font.otf', 200)
+FONTW = pygame.font.Font('fonts/font.otf', 400)
+
+restart_text = FONTSM.render('click left button to restart...', False, 'blue')
+restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT*7 // 10))
+
 game_over_text = FONT.render('GAME OVER', False, 'red')
 game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+game_win_text = FONTW.render('WIN', False, 'green')
+game_win_rect = game_win_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -106,6 +115,7 @@ class Tile(pygame.sprite.Sprite):
         if self.rect.collidepoint(mouse_pos):
             if self.status != "open" and self.status != "flaged":
                 self.status = "flaged"
+                game_win()
             elif self.status == "flaged":
                 self.status = "closed"
 
@@ -229,6 +239,8 @@ def change_stage(stage):
         GAMESTAGE = "game"
     if stage == "GAMEOVER":
         GAMESTAGE = "GAMEOVER"
+    if stage == "WIN":
+        GAMESTAGE = "WIN"
 
 
 def game_over():
@@ -247,33 +259,42 @@ def restart():
     change_stage("game")
 
 
+def game_win():
+    flags = 0
+    for t in tilesArr:
+        if t.status == "flaged" and t.num == 9:
+            flags += 1
+    if flags == BOMBS:
+        change_stage("WIN")
+
+
 def check_open_tiles(t):
     if t.get_tile("left"):
-        if t.get_tile("left").status == "open":
+        if t.get_tile("left").status == "open" and t.get_tile("left").num == 0:
             return True
     if t.get_tile("right"):
-        if t.get_tile("right").status == "open":
+        if t.get_tile("right").status == "open" and t.get_tile("right").num == 0:
             return True
     if t.get_tile("up"):
-        if t.get_tile("up").status == "open":
+        if t.get_tile("up").status == "open" and t.get_tile("up").num == 0:
             return True
     if t.get_tile("down"):
-        if t.get_tile("down").status == "open":
+        if t.get_tile("down").status == "open" and t.get_tile("down").num == 0:
             return True
     if t.get_tile("up-left"):
-        if t.get_tile("up-left").status == "open":
+        if t.get_tile("up-left").status == "open" and t.get_tile("up-left").num == 0:
             return True
     if t.get_tile("up-right"):
-        if t.get_tile("up-right").status == "open":
+        if t.get_tile("up-right").status == "open" and t.get_tile("up-right").num == 0:
             return True
     if t.get_tile("down-right"):
-        if t.get_tile("down-right").status == "open":
+        if t.get_tile("down-right").status == "open" and t.get_tile("down-right").num == 0:
             return True
     if t.get_tile("down-left"):
-        if t.get_tile("down-left").status == "open":
+        if t.get_tile("down-left").status == "open" and t.get_tile("down-left").num == 0:
             return True
     else:
-        False
+        return False
 
 
 def open_empty_tiles():
@@ -325,6 +346,20 @@ while running:
         screen.fill("white")
         tiles.draw(screen)
         screen.blit(game_over_text, game_over_rect)
+        screen.blit(restart_text, restart_rect)
+
+    if GAMESTAGE == "WIN":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    restart()
+
+        screen.fill("white")
+        tiles.draw(screen)
+        screen.blit(game_win_text, game_win_rect)
+        screen.blit(restart_text, restart_rect)
 
     pygame.display.update()
 
